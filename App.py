@@ -3,6 +3,24 @@ from tkinter import *
 HORIZONTAL = 1
 VERTICAL = 2
 
+# filename = r'watermark.png'
+# img = Image.open(filename)
+# img.save('logo.ico')
+# def save_as_png(c, file_name):
+#     # save postscript image
+#     c.postscript(file=file_name + '.eps')
+#     # use PIL to convert to PNG
+#     im = Image.open(file_name + '.eps')
+#     im.save(file_name + '.png', 'png')
+#
+#
+# def getter(widget):
+#     global window
+#     xx = window.winfo_rootx() + widget.winfo_x()
+#     yy = window.winfo_rooty() + widget.winfo_y()
+#     xx1 = xx + widget.winfo_width()
+#     yy1 = yy + widget.winfo_height()
+#     ImageGrab.grab().crop((xx, yy, xx1, yy1)).save("image_canvas.png")
 
 class App:
     def __init__(self, top):

@@ -15,6 +15,8 @@ img_width, img_height = 100, 100
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
 window.title("water marker")
+# window.iconbitmap('/home/yassine/PycharmProjects/watermarker/logo.ico')
+# window.tk.call('wm', 'iconphoto', window._w, PhotoImage(file='watermark.gif'))
 window.geometry("1150x630")
 window.config(padx=50, pady=50)
 
@@ -37,7 +39,7 @@ canvas_text = None
 inputtxt = None
 background_frame = None
 resize_mode = 0
-cursor = ''
+cursor = 'target'
 # sb_h_double_arrow sb_v_double_arrow
 txt = ''
 txt_width = ''
@@ -111,11 +113,11 @@ def edit(index):
     clear()
     global img, img_path, canvas, frame, canvas_container, cursor, canvas_background_path
     canvas_background_path = img_path[index]
-    frame = Frame(window, cursor=cursor, width=900, height=450)
+    frame = Frame(window, width=900, height=450)
     frame.grid(row=1, column=0)
     resize_img = Image.open(img_path[index])
     print(f'(width: {resize_img.width}, height: {resize_img.height})')
-    canvas = Canvas(frame, bg='#FFFFFF', width=900, height=450,
+    canvas = Canvas(frame, cursor=cursor, bg='#FFFFFF', width=900, height=450,
                     scrollregion=(0, 0, resize_img.width, resize_img.height))
     h_bar = Scrollbar(frame, orient=HORIZONTAL)
     h_bar.pack(side=BOTTOM, fill=X)
@@ -206,24 +208,6 @@ def save_img_result():
     Label(text=" saving successfully completed !").grid(row=4, column=0, pady=5)
 
 
-
-# def save_as_png(c, file_name):
-#     # save postscript image
-#     c.postscript(file=file_name + '.eps')
-#     # use PIL to convert to PNG
-#     im = Image.open(file_name + '.eps')
-#     im.save(file_name + '.png', 'png')
-#
-#
-# def getter(widget):
-#     global window
-#     xx = window.winfo_rootx() + widget.winfo_x()
-#     yy = window.winfo_rooty() + widget.winfo_y()
-#     xx1 = xx + widget.winfo_width()
-#     yy1 = yy + widget.winfo_height()
-#     ImageGrab.grab().crop((xx, yy, xx1, yy1)).save("image_canvas.png")
-
-
 def check_resize_mode(event_x, event_y, objet):
     global frame, canvas, img_height, img_width, cursor, x_min_text, y_min_text, x_min_img, y_min_img
     print(f'event_x  : {event_x}, width: {img_width} \n '
@@ -241,12 +225,18 @@ def check_resize_mode(event_x, event_y, objet):
         y_min_img = y_min
     if x_border+20 > event_x > x_border and y_max > event_y > y_min:
         mode |= H
-        # cursor = 'sb_h_double_arrow'
-        # frame.config(cursor=cursor)
+        # if cursor != 'target':
+        #     cursor = 'target'
+        #     frame.config(cursor=cursor)
     if y_border+20 > event_y > y_border and x_max > event_x > x_min:
         mode |= V
-        # cursor = 'sb_v_double_arrow'
-        # frame.config(cursor=cursor)
+        # if cursor != 'target':
+        #     cursor = 'target'
+        #     frame.config(cursor=cursor)
+    # if not mode:
+        # if cursor != '':
+        #     cursor = ''
+        #     frame.config(cursor=cursor)
     print(f'mode : {mode}')
     return mode
 
