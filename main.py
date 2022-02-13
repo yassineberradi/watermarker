@@ -2,7 +2,10 @@ import io
 import os
 from tkinter import Tk, Button, Label, Canvas, CENTER, Frame, BOTH, HORIZONTAL, Scrollbar, BOTTOM, VERTICAL, \
     RIGHT, X, Y, LEFT, Text, StringVar, OptionMenu
+from tkinter.colorchooser import askcolor
 from tkinter.filedialog import askopenfilenames, askopenfilename
+from tkinter.ttk import Progressbar
+
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 WIDTH, HEIGHT = 150, 150
@@ -12,7 +15,7 @@ img_width, img_height = 100, 100
 # ---------------------------- UI SETUP ------------------------------- #
 window = Tk()
 window.title("water marker")
-window.geometry("1150x600")
+window.geometry("1150x630")
 window.config(padx=50, pady=50)
 
 img_path = []
@@ -32,6 +35,7 @@ img_logo_txt = None
 image_container = None
 canvas_text = None
 inputtxt = None
+background_frame = None
 resize_mode = 0
 cursor = ''
 # sb_h_double_arrow sb_v_double_arrow
@@ -50,6 +54,9 @@ font_path_dict = {}
 drop_family, clicked_family, drop_variants, clicked_variants, drop_size, clicked_size = \
     None, None, None, None, None, None
 drop_variants_label, drop_size_label = None, None
+color_button = None
+colors = ((14, 15, 2), "#0000")
+drop_color_label = None
 IMAGES_PATH = './images_result'
 
 
@@ -70,21 +77,22 @@ def clear():
 
 
 def add():
-    global img_path
+    global img_path, background_frame
     paths = askopenfilenames(filetypes=[("Image File", '.jpg .png')])
     if len(paths) > 0:
         img_path = []
         clear()
         column_index = 1
         row_index = 0
-
-        add_button2 = Button(text="Add Images", width=15, command=add)
+        background_frame = Frame(window, width=300, height=300)
+        background_frame.pack()
+        add_button2 = Button(background_frame, text="Add Images", width=15, command=add)
         add_button2.grid(row=0, column=0)
         add_button2.config(bg='gray')
-        edit_button = Button(text="Edit Image", width=15, command=lambda: edit(0))
+        edit_button = Button(background_frame, text="Edit Image", width=15, command=lambda: edit(0))
         edit_button.config(bg='green')
         edit_button.grid(row=0, column=2)
-        center_frame = Frame(window, width=300, height=300, padx=25, pady=30)
+        center_frame = Frame(background_frame, width=300, height=300, padx=25, pady=30)
         center_frame.grid(row=1, columnspan=3)
 
         for pt in range(len(paths)):
@@ -161,13 +169,17 @@ def add_logo_txt(fl):
 def save_img_result():
     global canvas, canvas_background_path, final_img_path, img_logo, img_logo_txt, \
         text_img_data, final_text_width, final_text_height, final_img_width,\
-        final_img_height, x_min_img, y_min_img, x_min_text, y_min_text, img_path, IMAGES_PATH
+        final_img_height, x_min_img, y_min_img, x_min_text, y_min_text, img_path, IMAGES_PATH, background_frame
 
     edited_img = Image.open(canvas_background_path)
     edited_w = edited_img.width
     edited_h = edited_img.height
     print(f'image: {(canvas_background_path.split("/")[-1]).split(".")[0]}, '
           f'edited width: {edited_w}, edited height: {edited_h}')
+    my_progress = Progressbar(orient=HORIZONTAL, length=300, mode='determinate')
+    my_progress.grid(row=3, column=0, pady=5)
+    background_frame.update_idletasks()
+    step_progress = 0
     for path_item in img_path:
         im = Image.open(path_item)
         w = im.width
@@ -186,7 +198,13 @@ def save_img_result():
             im3 = text_im.resize((final_text_width, final_text_height))
             mask = im3.convert("RGBA")
             back_im.paste(mask, (int(x_min_text), int(y_min_text)), mask)
+
         back_im.save(f'{IMAGES_PATH}/{(path_item.split("/")[-1]).split(".")[0]}.png', quality=95)
+        step_progress += 1
+        my_progress['value'] = step_progress * (300 // len(img_path))
+        background_frame.update_idletasks()
+    Label(text=" saving successfully completed !").grid(row=4, column=0, pady=5)
+
 
 
 # def save_as_png(c, file_name):
@@ -291,7 +309,8 @@ def stop_resize(event):
 def add_text():
     global canvas, frame, inputtxt, drop_family, clicked_family,\
         drop_variants, clicked_variants, drop_size, clicked_size, \
-        font_path_dict, drop_variants_label, drop_size_label
+        font_path_dict, drop_variants_label, drop_size_label, \
+        color_button, drop_color_label
     if inputtxt is None:
         font_path = []
         for root, dirs, files in os.walk("./font"):
@@ -331,19 +350,26 @@ def add_text():
         clicked_size.set("10")
         drop_size = OptionMenu(frame, clicked_size, "10", "11", "12", "15", "20", "30", "40", "50", "60", "70", "80")
         drop_size.pack()
+        drop_color_label = Label(frame, text=" Color:")
+        drop_color_label.pack()
+        color_button = Button(frame, text='Select a Color', command=change_color)
+        color_button.config(width=12)
+        color_button.pack()
 
 
 def font_family(value):
     global drop_family, clicked_family,\
         drop_variants, clicked_variants, \
         drop_size, clicked_size, font_path_dict, \
-        drop_variants_label, drop_size_label
+        drop_variants_label, drop_size_label, color_button, drop_color_label
     family = value
     print(family)
     drop_variants_label.pack_forget()
     drop_variants.pack_forget()
     drop_size_label.pack_forget()
     drop_size.pack_forget()
+    color_button.pack_forget()
+    drop_color_label.pack_forget()
     drop_variants_label = Label(frame, text=" variants:")
     drop_variants_label.pack()
     clicked_variants_values = [key for key in font_path_dict[value].keys()]
@@ -357,13 +383,19 @@ def font_family(value):
     clicked_size.set(clicked_size.get())
     drop_size = OptionMenu(frame, clicked_size, "10", "11", "12", "15", "20", "30", "40", "50", "60", "70", "80")
     drop_size.pack()
+    # color button
+    drop_color_label = Label(frame, text=" Color:")
+    drop_color_label.pack()
+    color_button = Button(frame, text='Select a Color', command=change_color)
+    color_button.config(width=12)
+    color_button.pack()
 
 
 def add_text_btn():
     global inputtxt, txt, text_img_data, \
         drop_family, clicked_family,\
         drop_variants, clicked_variants, \
-        drop_size, clicked_size, font_path_dict
+        drop_size, clicked_size, font_path_dict, colors
     txt = inputtxt.get("1.0", "end-1c")
     if txt != '':
         print(clicked_family.get(), clicked_variants.get(), clicked_size.get())
@@ -374,7 +406,7 @@ def add_text_btn():
         t_width, t_height = d.textsize(txt, font=font)
         img_text = Image.new('RGBA', (t_width, t_height), (255, 255, 255, 0))
         d = ImageDraw.Draw(img_text)
-        d.text((0, 0), txt, font=font, fill=(255, 0, 0))
+        d.text((0, 0), txt, font=font, fill=colors[0])
         # img_text.save("geeks1.png")
         # add_logo_txt('geeks1.png')
         s = io.BytesIO()
@@ -384,6 +416,12 @@ def add_text_btn():
         text_img_data = file_data
         dt = Image.open(file_data)
         add_logo_txt(dt)
+
+
+def change_color():
+    global colors
+    colors = askcolor(title="Tkinter Color Chooser")
+    # window.configure(bg=colors[1])
 
 
 def move(e):
